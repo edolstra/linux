@@ -248,6 +248,7 @@ struct inode *v9fs_alloc_inode(struct super_block *sb)
 #endif
 	v9inode->writeback_fid = NULL;
 	v9inode->cache_validity = 0;
+	v9inode->symlink = NULL;
 	mutex_init(&v9inode->v_mutex);
 	return &v9inode->vfs_inode;
 }
@@ -260,7 +261,10 @@ struct inode *v9fs_alloc_inode(struct super_block *sb)
 static void v9fs_i_callback(struct rcu_head *head)
 {
 	struct inode *inode = container_of(head, struct inode, i_rcu);
-	kmem_cache_free(v9fs_inode_cache, V9FS_I(inode));
+	struct v9fs_inode *v9inode = V9FS_I(inode);
+	if (v9inode->symlink)
+		kfree(v9inode->symlink);
+	kmem_cache_free(v9fs_inode_cache, v9inode);
 }
 
 void v9fs_destroy_inode(struct inode *inode)

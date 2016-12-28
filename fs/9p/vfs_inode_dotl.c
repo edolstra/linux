@@ -908,17 +908,35 @@ static const char *
 v9fs_vfs_follow_link_dotl(struct dentry *dentry, void **cookie)
 {
 	struct p9_fid *fid = v9fs_fid_lookup(dentry);
+	struct v9fs_session_info *v9ses = v9fs_inode2v9ses(d_inode(dentry));
+	struct v9fs_inode *v9inode = V9FS_I(d_inode(dentry));
 	char *target;
 	int retval;
 
 	p9_debug(P9_DEBUG_VFS, "%pd\n", dentry);
+
+	*cookie = NULL;
+
+	if (v9inode->symlink)
+		return v9inode->symlink;
 
 	if (IS_ERR(fid))
 		return ERR_CAST(fid);
 	retval = p9_client_readlink(fid, &target);
 	if (retval)
 		return ERR_PTR(retval);
-	return *cookie = target;
+
+	if (v9ses->cache_symlinks)
+		return v9inode->symlink = target;
+	else
+		return *cookie = target;
+}
+
+static void
+v9fs_vfs_put_link(struct inode *unused, void *cookie)
+{
+	if (cookie)
+		kfree(cookie);
 }
 
 int v9fs_refresh_inode_dotl(struct p9_fid *fid, struct inode *inode)
@@ -985,7 +1003,7 @@ const struct inode_operations v9fs_file_inode_operations_dotl = {
 const struct inode_operations v9fs_symlink_inode_operations_dotl = {
 	.readlink = generic_readlink,
 	.follow_link = v9fs_vfs_follow_link_dotl,
-	.put_link = kfree_put_link,
+	.put_link = v9fs_vfs_put_link,
 	.getattr = v9fs_vfs_getattr_dotl,
 	.setattr = v9fs_vfs_setattr_dotl,
 	.setxattr = generic_setxattr,
