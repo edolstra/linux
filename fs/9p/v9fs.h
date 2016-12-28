@@ -101,6 +101,9 @@ struct v9fs_session_info {
 	unsigned short debug;
 	unsigned int afid;
 	unsigned int cache;
+	unsigned int cache_symlinks; /* whether to cache symlink reads */
+	unsigned int cache_negative; /* whether to cache negative dentries */
+	unsigned int revalidate;     /* whether to revalidate dentries on lookup */
 #ifdef CONFIG_9P_FSCACHE
 	char *cachetag;
 	struct fscache_cookie *fscache;
@@ -129,6 +132,7 @@ struct v9fs_inode {
 	struct p9_qid qid;
 	unsigned int cache_validity;
 	struct p9_fid *writeback_fid;
+	char* symlink;
 	struct mutex v_mutex;
 	struct inode vfs_inode;
 };
@@ -172,7 +176,7 @@ static inline struct v9fs_session_info *v9fs_inode2v9ses(struct inode *inode)
 	return (inode->i_sb->s_fs_info);
 }
 
-static inline struct v9fs_session_info *v9fs_dentry2v9ses(struct dentry *dentry)
+static inline struct v9fs_session_info *v9fs_dentry2v9ses(const struct dentry *dentry)
 {
 	return dentry->d_sb->s_fs_info;
 }

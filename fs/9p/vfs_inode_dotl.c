@@ -904,6 +904,8 @@ v9fs_vfs_get_link_dotl(struct dentry *dentry,
 		       struct inode *inode,
 		       struct delayed_call *done)
 {
+	struct v9fs_inode *v9inode = V9FS_I(inode);
+	struct v9fs_session_info *v9ses;
 	struct p9_fid *fid;
 	char *target;
 	int retval;
@@ -913,13 +915,22 @@ v9fs_vfs_get_link_dotl(struct dentry *dentry,
 
 	p9_debug(P9_DEBUG_VFS, "%pd\n", dentry);
 
+	if (v9inode->symlink)
+		return v9inode->symlink;
+
 	fid = v9fs_fid_lookup(dentry);
 	if (IS_ERR(fid))
 		return ERR_CAST(fid);
 	retval = p9_client_readlink(fid, &target);
 	if (retval)
 		return ERR_PTR(retval);
-	set_delayed_call(done, kfree_link, target);
+
+	v9ses = v9fs_inode2v9ses(inode);
+	if (v9ses->cache_symlinks)
+		v9inode->symlink = target;
+	else
+		set_delayed_call(done, kfree_link, target);
+
 	return target;
 }
 

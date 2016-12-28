@@ -56,7 +56,7 @@ enum {
 	/* Options that take no arguments */
 	Opt_nodevmap,
 	/* Cache options */
-	Opt_cache_loose, Opt_fscache, Opt_mmap,
+	Opt_cache_loose, Opt_fscache, Opt_mmap, Opt_veryloose,
 	/* Access options */
 	Opt_access, Opt_posixacl,
 	/* Error token */
@@ -75,6 +75,7 @@ static const match_table_t tokens = {
 	{Opt_cache_loose, "loose"},
 	{Opt_fscache, "fscache"},
 	{Opt_mmap, "mmap"},
+	{Opt_veryloose, "veryloose"},
 	{Opt_cachetag, "cachetag=%s"},
 	{Opt_access, "access=%s"},
 	{Opt_posixacl, "posixacl"},
@@ -123,6 +124,9 @@ static int v9fs_parse_options(struct v9fs_session_info *v9ses, char *opts)
 	v9ses->afid = ~0;
 	v9ses->debug = 0;
 	v9ses->cache = CACHE_NONE;
+	v9ses->cache_symlinks = 0;
+	v9ses->cache_negative = 0;
+	v9ses->revalidate = 1;
 #ifdef CONFIG_9P_FSCACHE
 	v9ses->cachetag = NULL;
 #endif
@@ -226,6 +230,12 @@ static int v9fs_parse_options(struct v9fs_session_info *v9ses, char *opts)
 			break;
 		case Opt_mmap:
 			v9ses->cache = CACHE_MMAP;
+			break;
+		case Opt_veryloose:
+			v9ses->cache = CACHE_LOOSE;
+			v9ses->cache_symlinks = 1;
+			v9ses->cache_negative = 1;
+			v9ses->revalidate = 0;
 			break;
 		case Opt_cachetag:
 #ifdef CONFIG_9P_FSCACHE
