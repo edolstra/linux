@@ -55,6 +55,7 @@ enum {
 	Opt_uname, Opt_remotename, Opt_cache, Opt_cachetag,
 	/* Options that take no arguments */
 	Opt_nodevmap,
+	Opt_forceuid,
 	/* Cache options */
 	Opt_cache_loose, Opt_fscache, Opt_mmap, Opt_veryloose,
 	/* Access options */
@@ -67,6 +68,7 @@ static const match_table_t tokens = {
 	{Opt_debug, "debug=%x"},
 	{Opt_dfltuid, "dfltuid=%u"},
 	{Opt_dfltgid, "dfltgid=%u"},
+	{Opt_forceuid, "forceuid"},
 	{Opt_afid, "afid=%u"},
 	{Opt_uname, "uname=%s"},
 	{Opt_remotename, "aname=%s"},
@@ -121,6 +123,7 @@ static int v9fs_parse_options(struct v9fs_session_info *v9ses, char *opts)
 	int ret = 0;
 
 	/* setup defaults */
+	v9ses->forceuid = 0;
 	v9ses->afid = ~0;
 	v9ses->debug = 0;
 	v9ses->cache = CACHE_NONE;
@@ -192,6 +195,9 @@ static int v9fs_parse_options(struct v9fs_session_info *v9ses, char *opts)
 				ret = -EINVAL;
 				continue;
 			}
+			break;
+		case Opt_forceuid:
+			v9ses->forceuid = 1;
 			break;
 		case Opt_afid:
 			r = match_int(&args[0], &option);

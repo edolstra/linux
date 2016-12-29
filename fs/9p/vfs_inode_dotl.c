@@ -612,6 +612,7 @@ v9fs_stat2inode_dotl(struct p9_stat_dotl *stat, struct inode *inode)
 {
 	umode_t mode;
 	struct v9fs_inode *v9inode = V9FS_I(inode);
+	struct v9fs_session_info *v9ses = v9fs_inode2v9ses(inode);
 
 	if ((stat->st_result_mask & P9_STATS_BASIC) == P9_STATS_BASIC) {
 		inode->i_atime.tv_sec = stat->st_atime_sec;
@@ -620,8 +621,8 @@ v9fs_stat2inode_dotl(struct p9_stat_dotl *stat, struct inode *inode)
 		inode->i_mtime.tv_nsec = stat->st_mtime_nsec;
 		inode->i_ctime.tv_sec = stat->st_ctime_sec;
 		inode->i_ctime.tv_nsec = stat->st_ctime_nsec;
-		inode->i_uid = stat->st_uid;
-		inode->i_gid = stat->st_gid;
+		inode->i_uid = v9ses->forceuid ? v9ses->dfltuid : stat->st_uid;
+		inode->i_gid = v9ses->forceuid ? v9ses->dfltgid : stat->st_gid;
 		set_nlink(inode, stat->st_nlink);
 
 		mode = stat->st_mode & S_IALLUGO;
@@ -644,9 +645,9 @@ v9fs_stat2inode_dotl(struct p9_stat_dotl *stat, struct inode *inode)
 			inode->i_ctime.tv_nsec = stat->st_ctime_nsec;
 		}
 		if (stat->st_result_mask & P9_STATS_UID)
-			inode->i_uid = stat->st_uid;
+			inode->i_uid = v9ses->forceuid ? v9ses->dfltuid : stat->st_uid;
 		if (stat->st_result_mask & P9_STATS_GID)
-			inode->i_gid = stat->st_gid;
+			inode->i_gid = v9ses->forceuid ? v9ses->dfltgid : stat->st_gid;
 		if (stat->st_result_mask & P9_STATS_NLINK)
 			set_nlink(inode, stat->st_nlink);
 		if (stat->st_result_mask & P9_STATS_MODE) {

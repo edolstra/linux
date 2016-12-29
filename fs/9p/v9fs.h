@@ -99,6 +99,7 @@ struct v9fs_session_info {
 	unsigned char flags;
 	unsigned char nodev;
 	unsigned short debug;
+	unsigned int forceuid;
 	unsigned int afid;
 	unsigned int cache;
 	unsigned int cache_symlinks; /* whether to cache symlink reads */
